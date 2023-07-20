@@ -81,9 +81,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': config('NAME'),
-        'USER': 'nlzcyepl',
-        'PASSWORD': 'mnnX2Z96CGqPEqjRdrcyjUuA5kzPdBvd',
-        'HOST': 'mahmud.db.elephantsql.com',
+        'USER': config('USER'),
+        'PASSWORD': config('PASSWORD'),
+        'HOST': config('HOST'),
     }
 }
 
