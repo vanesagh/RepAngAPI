@@ -81,7 +81,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': config('NAME'),
-        'USER': config('USER'),
+        'USER': config('USER_DB'),
         'PASSWORD': config('PASSWORD'),
         'HOST': config('HOST'),
     }
@@ -130,5 +130,5 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 GRAPHENE = {
-    "SCHEMA": "api.schema.schema"
+    "SCHEMA": "repang_api.main_schema.schema"
 }
