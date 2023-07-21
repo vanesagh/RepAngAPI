@@ -1,5 +1,5 @@
 import graphene
-from api.schema import Query as QueryApi
+from products.schema import Query as QueryApi
 from graphene import Schema
 
 
