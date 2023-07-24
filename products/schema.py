@@ -1,7 +1,30 @@
 import graphene
-
+from decimal import Decimal as DecimalType
 from graphene_django import DjangoObjectType
+from graphene.types.scalars import Scalar
+from graphql.language import ast
 from .models import Product
+
+
+class Decimal(Scalar):
+    @staticmethod
+    def serialize(decimal):
+
+        assert isinstance(
+            decimal, DecimalType
+        ), f'Received not compatible Decimal "{repr(decimal)}"'
+        return float(decimal)
+
+    @staticmethod
+    def parse_value(value):
+        return DecimalType(value)
+
+    @staticmethod
+    def parse_literal(node, _variables=None):
+        if isinstance(node, ast.FloatValueNode):
+            return DecimalType(node.value)
+        return None
+
 
 
 class ProductType(DjangoObjectType):
@@ -9,6 +32,8 @@ class ProductType(DjangoObjectType):
         model = Product
         fields = "__all__"
 
+    category = graphene.String()
+    price = Decimal()
 
 class Query(graphene.ObjectType):
     all_products = graphene.List(ProductType)
@@ -21,4 +46,4 @@ class Query(graphene.ObjectType):
         return Product.objects.get(pk=id)
 
 
-schema = graphene.Schema(query=Query)
+schema = graphene.Schema(query=Query, types=[Decimal])

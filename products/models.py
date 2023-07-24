@@ -13,6 +13,7 @@ class Product(models.Model):
     price = models.DecimalField(max_digits=5, decimal_places=2)
     category = models.CharField(max_length=10, choices=CATEGORIES,null=True)
 
+
     def __str__(self):
         return self.name
 
