@@ -23,7 +23,7 @@ class RawMaterial(models.Model):
     brand = models.CharField(max_length=200)
     presentation = models.CharField(max_length=200)
     quantity = models.IntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(100)]
+        validators=[MinValueValidator(1), MaxValueValidator(1000)]
     )
     units = models.CharField(max_length=10)
     suppliers = models.ManyToManyField(Supplier, through='RawMaterialSupplier')
