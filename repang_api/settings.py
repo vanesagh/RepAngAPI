@@ -14,6 +14,7 @@ from pathlib import Path
 #from decouple import config
 import os
 import dj_database_url
+import sys
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -82,12 +83,25 @@ WSGI_APPLICATION = 'repang_api.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
+DATABASES ={}
+if 'test' in sys.argv:
+    DATABASES = {
+        'default':{
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'test',
+            'USER': 'test',
+            'PASSWORD': 'test',
+            'HOST': 'localhost',
+            }
+        }
+else:
 
-DATABASES = {
-        'default': dj_database_url.config(
-            default=os.environ.get('DATABASE_URL'),
-            conn_max_age=600)
-}
+    DATABASES = {
+        'default':
+        {
+            dj_database_url.config(default=os.environ.get('DATABASE_URL'),conn_max_age=600)
+        }
+    }
 
 
 # Password validation
