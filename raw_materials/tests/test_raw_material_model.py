@@ -1,126 +1,96 @@
 from django.test import TestCase
-from django.db.utils import DataError
+from django.db.utils import DataError,IntegrityError
 from django.core.exceptions import ValidationError
 # Create your tests here.
-from raw_materials.models import RawMaterial, Supplier
+from raw_materials.models import RawMaterial, Brand
 
 
 class RawMaterialModelTest(TestCase):
     def setUp(self):
+        # Create some brands
+        self.brand_1 = Brand.objects.create(name="Test name 1")
+        self.brand_2 = Brand.objects.create(name="Test name 2")
 
-        # Create some suppliers
-        self.supplier_1 = Supplier.objects.create(
-            name="Test name",
-            type="M"
-        )
-        self.supplier_2 = Supplier.objects.create(
-            name="Test name",
-            type="TL"
+        self.raw_material_1 = RawMaterial.objects.create(product="Test product 1")
+        self.raw_material_2 = RawMaterial.objects.create(product="Test product 2")
+
+        # Create RawMaterialBrand instances to associate Brands with RawMaterials
+        self.raw_material_brand_1 = self.raw_material_1.rawmaterialbrand_set.create(
+            brand=self.brand_1,
+            presentation="Presentation 1",
+            quantity=1,
+            units="L"
         )
 
-        self.raw_material = RawMaterial.objects.create(
-            product="Test product",
-            brand="x",
-            presentation="",
-            quantity=44,
+        self.raw_material_brand_2 = self.raw_material_2.rawmaterialbrand_set.create(
+            brand=self.brand_2,
+            presentation="Presentation 2",
+            quantity=1,
             units="Kg"
         )
 
     def test_raw_material_str_representation(self):
-        self.assertEqual(str(self.raw_material), "Test product")
+        self.assertEqual(str(self.raw_material_1), "Test product 1")
 
-    def test_raw_material_supplier_relationship(self):
-        supplier = Supplier.objects.create(name="Test name", type='TA')
+    def test_unique_product(self):
+        with self.assertRaises(IntegrityError):
+            RawMaterial.objects.create(product="Test product 1")
+
+    def test_raw_material_brand_relationship(self):
+        brand = Brand.objects.create(name="Test name")
         raw_material = RawMaterial.objects.create(
             product="Test producto",
-            brand="x",
-            presentation="",
-            quantity=44,
-            units="L"
         )
-
-        raw_material.suppliers.add(supplier, through_defaults={'offered_price': 90})
-        # Verify that the supplier is associated with the raw material
-        self.assertIn(supplier, raw_material.suppliers.all())
-
-    def test_query_products_by_supplier(self):
-        supplier_1 = Supplier.objects.create(name="La Comer", type='TA')
-        supplier_2 = Supplier.objects.create(name="Mercado Coyoacan", type='M')
-        raw_material_1 = RawMaterial.objects.create(
-            product="Test product1",
-            brand="x",
-            presentation="",
-            quantity=44,
-            units="ml"
-        )
-        raw_material_2 = RawMaterial.objects.create(
-            product="Test product2",
-            brand="x",
-            presentation="p",
-            quantity=44,
-            units="g"
-        )
-        raw_material_1.suppliers.add(supplier_1, through_defaults={'offered_price': 50})
-
-        raw_materials_by_supplier_1 = RawMaterial.objects.filter(suppliers=supplier_1)
-        self.assertEqual(list(raw_materials_by_supplier_1), [raw_material_1])
-
-        raw_material_2.suppliers.add(supplier_2, through_defaults={'offered_price': 450})
-
-        raw_materials_by_supplier_2 = RawMaterial.objects.filter(suppliers=supplier_2)
-        self.assertEqual(list(raw_materials_by_supplier_2), [raw_material_2])
-
-    def test_delete_supplier_cascade(self):
-        self.raw_material.suppliers.add(self.supplier_1, through_defaults={'offered_price': 150})
-        self.raw_material.suppliers.add(self.supplier_2, through_defaults={'offered_price': 100})
-
-        # Verify that the raw material is associated with suppliers
-        self.assertEqual(self.raw_material.suppliers.count(), 2)
-
-        # Delete of the suppliers
-        self.supplier_1.delete()
-
-        # Verify that the raw material is no longer associated with the deleted supplier
-        self.raw_material.refresh_from_db()
-        self.assertEqual(self.raw_material.suppliers.count(), 1)
-        self.assertIn(self.supplier_2, self.raw_material.suppliers.all())
-
-    def test_valid_units(self):
-        valid_units = ['Kg', 'g', 'L', 'ml', 'Pieza']
-        self.assertIn(self.raw_material.units, valid_units)
-
-    def test_invalid_units_raises_validation_error(self):
-        RawMaterial.objects.create(
-            product="Test product",
-            brand="Test brand",
+        raw_material_brand = raw_material.rawmaterialbrand_set.create(
+            brand=brand,
             presentation="Test presentation",
             quantity=1,
-            units="Invalid",
+            units="kg"
         )
+
+        # Verify that the brand is associated with the raw material
+        self.assertIn(raw_material_brand, raw_material.rawmaterialbrand_set.all())
+
+    def test_query_products_by_brand(self):
+        # Test case 1: Query products for Brand 1
+        products_for_brand_1 = RawMaterial.objects.filter(brands=self.brand_1)
+        self.assertIn(self.raw_material_1, products_for_brand_1)
+        self.assertNotIn(self.raw_material_2, products_for_brand_1)
+
+        # Test case 2: Query products for Brand 2
+        products_for_brand_2 = RawMaterial.objects.filter(brands=self.brand_2)
+        self.assertIn(self.raw_material_2, products_for_brand_2)
+        self.assertNotIn(self.raw_material_1, products_for_brand_2)
+
+        # Test case 3: Query products for a non-existing brand
+        non_existing_brand = Brand(name="Non-existing Brand")
+        products_for_non_existing_brand = RawMaterial.objects.filter(brands=non_existing_brand)
+        self.assertListEqual(list(products_for_non_existing_brand), [])
+
+
+    def test_delete_brand_cascade(self):
+        raw_material_1_brand_2 = self.raw_material_1.rawmaterialbrand_set.create(
+            brand=self.brand_2,
+            presentation="Presentation 2",
+            quantity=1,
+            units="Kg"
+        )
+
+        # Verify that the raw material is associated with brands
+        self.assertEqual(self.raw_material_1.brands.count(), 2)
+
+        # Delete of the brands
+        self.brand_1.delete()
+
+        # Verify that the raw material is no longer associated with the deleted brand
+        self.raw_material_1.refresh_from_db()
+        self.assertEqual(self.raw_material_1.brands.count(), 1)
+        self.assertIn(self.brand_2, self.raw_material_1.brands.all())
 
 
 class RawMaterialModelEdgeTest(TestCase):
-    def test_very_long_presentation(self):
-        long_presentation= "Hi"*1000
+    def test_very_long_product(self):
+        long_product = "Hi" * 1000
         with self.assertRaises(DataError):
-            RawMaterial.objects.create(
-                product="Test product",
-                brand="Test brand",
-                presentation=long_presentation,
-                quantity=34,
-                units="Kg"
-            )
-
-    def test_invalid_quantity_value(self):
-        invalid_quantity = -5
-        with self.assertRaises(ValidationError):
-            raw_material = RawMaterial.objects.create(
-                product="Test product",
-                brand="Test Brand",
-                presentation="Test presentation",
-                quantity=invalid_quantity,
-                units="ml"
-            )
-            raw_material.full_clean()
-
+            RawMaterial.objects.create(product=long_product)
 
