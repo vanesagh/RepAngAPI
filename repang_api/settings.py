@@ -82,12 +82,19 @@ WSGI_APPLICATION = 'repang_api.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
+DATABASES ={}
+if 'test' in sys.argv:
+    DATABASES['default'] = {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'test',
+            'USER': 'test',
+            'PASSWORD': 'test',
+            'HOST': 'localhost',
 
-DATABASES = {
-        'default': dj_database_url.config(
-            default=os.environ.get('DATABASE_URL'),
-            conn_max_age=600)
-}
+        }
+else:
+
+    DATABASES['default'] = {dj_database_url.config(default=os.environ.get('DATABASE_URL'),conn_max_age=600)}
 
 
 # Password validation
