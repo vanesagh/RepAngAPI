@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
-#from decouple import config
+from decouple import config
 import os
 import dj_database_url
 import sys
@@ -24,7 +24,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY')
+SECRET_KEY = None
+if 'runserver' in sys.argv:
+    SECRET_KEY = config('SECRET_KEY')
+else:
+    SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = 'RENDER' not in os.environ
@@ -46,6 +50,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'products.apps.ApiConfig',
     'graphene_django',
+    'raw_materials.apps.RawMaterialsConfig',
 
 ]
 
@@ -83,8 +88,8 @@ WSGI_APPLICATION = 'repang_api.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-DATABASES ={}
-if 'test' in sys.argv:
+DATABASES = {}
+if 'test'  in sys.argv:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -94,6 +99,19 @@ if 'test' in sys.argv:
             'HOST': 'localhost',
             }
         }
+elif 'runserver' or 'makemigrations'  in sys.argv:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('NAME'),
+            'USER': config('USER_DB'),
+            'PASSWORD': config('PASSWORD'),
+            'HOST': config('HOST'),
+        }
+    }
+
+
+
 else:
 
     DATABASES = {
