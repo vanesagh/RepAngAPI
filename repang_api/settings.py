@@ -89,7 +89,7 @@ WSGI_APPLICATION = 'repang_api.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 DATABASES = {}
-if 'test'  in sys.argv:
+if 'test' in sys.argv:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -99,7 +99,7 @@ if 'test'  in sys.argv:
             'HOST': 'localhost',
             }
         }
-elif 'runserver' or 'makemigrations'  in sys.argv:
+elif 'makemigrations' in sys.argv:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -109,8 +109,6 @@ elif 'runserver' or 'makemigrations'  in sys.argv:
             'HOST': config('HOST'),
         }
     }
-
-
 
 else:
 
