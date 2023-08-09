@@ -3,13 +3,12 @@ from decimal import Decimal as DecimalType
 from graphene_django import DjangoObjectType
 from graphene.types.scalars import Scalar
 from graphql.language import ast
-from .models import Product
+from .models import Product, Presentation, Category
 
 
 class Decimal(Scalar):
     @staticmethod
     def serialize(decimal):
-
         assert isinstance(
             decimal, DecimalType
         ), f'Received not compatible Decimal "{repr(decimal)}"'
@@ -26,14 +25,33 @@ class Decimal(Scalar):
         return None
 
 
+class CategoryType(DjangoObjectType):
+    class Meta:
+        model = Category
+        fields = "__all__"
+
+
+class PresentationType(DjangoObjectType):
+    class Meta:
+        model = Presentation
+        fields = "__all__"
+
 
 class ProductType(DjangoObjectType):
     class Meta:
         model = Product
         fields = "__all__"
 
-    category = graphene.String()
     price = Decimal()
+    presentation = graphene.Field(PresentationType)
+    category = graphene.Field(CategoryType)
+
+    def resolve_presentation(self, info):
+        return self.presentation
+
+    def resolve_category(self, info):
+        return self.category
+
 
 class Query(graphene.ObjectType):
     all_products = graphene.List(ProductType)
